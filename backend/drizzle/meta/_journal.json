@@ -36,6 +36,13 @@
       "when": 1784381587819,
       "tag": "0004_burly_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784381904081,
+      "tag": "0005_wild_kabuki",
+      "breakpoints": true
     }
   ]
 }
