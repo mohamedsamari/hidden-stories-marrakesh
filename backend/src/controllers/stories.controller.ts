@@ -6,7 +6,14 @@ export const storiesController = {
         try{
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const stories = await storiesService.getAllStories(page, limit);
+            const filters = {
+                categoryId: req.query.categoryId as string | undefined,
+                historicalPeriodId: req.query.historicalPeriodId as string | undefined,
+                dynastyId: req.query.dynastyId as string | undefined,
+                century: req.query.century ? parseInt(req.query.century as string) : undefined,
+                };
+
+            const stories = await storiesService.getAllStories(page, limit, filters);
             res.status(200).json(stories);
         }
         catch (error) {
