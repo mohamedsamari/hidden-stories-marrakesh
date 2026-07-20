@@ -4,7 +4,9 @@ import {storiesService} from '../services/stories.service';
 export const storiesController = {
     async getAll(req: Request, res: Response){
         try{
-            const stories = await storiesService.getAllStories();
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const stories = await storiesService.getAllStories(page, limit);
             res.status(200).json(stories);
         }
         catch (error) {
