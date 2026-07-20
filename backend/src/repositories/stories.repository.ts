@@ -1,12 +1,13 @@
 import { db } from '../db/client';
 import { stories } from '../db/schema/stories';
-import { eq, and, asc, desc, SQL } from 'drizzle-orm';
+import { eq, and, or, ilike, asc, desc, SQL } from 'drizzle-orm';
 
 export interface StoryFilters {
   categoryId?: string;
   historicalPeriodId?: string;
   dynastyId?: string;
   century?: number;
+  search?: string;
 }
 
 export interface SortOptions {
@@ -35,6 +36,18 @@ export const storiesRepository = {
     }
     if (filters.century) {
       conditions.push(eq(stories.century, filters.century));
+    }
+
+
+    if (filters.search) {
+      const searchPattern = `%${filters.search}%`;
+      const searchCondition = or(
+        ilike(stories.titleEn, searchPattern),
+        ilike(stories.titleFr, searchPattern),
+        ilike(stories.shortDescriptionEn, searchPattern),
+        ilike(stories.shortDescriptionFr, searchPattern),
+      );
+      if (searchCondition) conditions.push(searchCondition);
     }
 
     const column = sortableColumns[sort.sortBy ?? 'createdAt'];

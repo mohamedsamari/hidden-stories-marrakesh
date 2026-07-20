@@ -11,6 +11,7 @@ export const storiesController = {
                 historicalPeriodId: req.query.historicalPeriodId as string | undefined,
                 dynastyId: req.query.dynastyId as string | undefined,
                 century: req.query.century ? parseInt(req.query.century as string) : undefined,
+                search: req.query.search as string | undefined,
                 };
             const sort = {
                 sortBy: req.query.sortBy as 'titleEn' | 'createdAt' | 'century' | undefined,
