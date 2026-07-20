@@ -1,16 +1,27 @@
 import { db } from '../db/client';
 import { stories } from '../db/schema/stories';
-import { eq, and, SQL } from 'drizzle-orm';
+import { eq, and, asc, desc, SQL } from 'drizzle-orm';
 
-interface StoryFilters {
+export interface StoryFilters {
   categoryId?: string;
   historicalPeriodId?: string;
   dynastyId?: string;
   century?: number;
 }
 
+export interface SortOptions {
+  sortBy?: 'titleEn' | 'createdAt' | 'century';
+  order?: 'asc' | 'desc';
+}
+
+const sortableColumns = {
+  titleEn: stories.titleEn,
+  createdAt: stories.createdAt,
+  century: stories.century,
+};
+
 export const storiesRepository = {
-  async findAll(limit: number, offset: number, filters: StoryFilters) {
+  async findAll(limit: number, offset: number, filters: StoryFilters,  sort: SortOptions) {
     const conditions: SQL[] = [eq(stories.isPublished, true)];
 
     if (filters.categoryId) {
@@ -26,10 +37,14 @@ export const storiesRepository = {
       conditions.push(eq(stories.century, filters.century));
     }
 
+    const column = sortableColumns[sort.sortBy ?? 'createdAt'];
+    const orderFn = sort.order === 'asc' ? asc : desc;
+
     return db
       .select()
       .from(stories)
       .where(and(...conditions))
+      .orderBy(orderFn(column))
       .limit(limit)
       .offset(offset);
   },

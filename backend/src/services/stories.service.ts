@@ -1,16 +1,18 @@
-import { storiesRepository } from '../repositories/stories.repository';
+import { storiesRepository,StoryFilters, SortOptions} from '../repositories/stories.repository';
+
 
 export const storiesService = {
   async getAllStories(
     page: number,
     limit: number,
-    filters: { categoryId?: string; historicalPeriodId?: string; dynastyId?: string; century?: number }
+    filters: StoryFilters,
+    sort: SortOptions,
   ) {
     const safeLimit = limit > 0 ? limit : 10;
     const safePage = page > 0 ? page : 1;
     const offset = (safePage - 1) * safeLimit;
 
-    return storiesRepository.findAll(safeLimit, offset, filters);
+    return storiesRepository.findAll(safeLimit, offset, filters, sort);
   },
   async getStoryById(id: string) {
     const story = await storiesRepository.findById(id);

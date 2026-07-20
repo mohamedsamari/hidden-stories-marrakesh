@@ -12,8 +12,11 @@ export const storiesController = {
                 dynastyId: req.query.dynastyId as string | undefined,
                 century: req.query.century ? parseInt(req.query.century as string) : undefined,
                 };
-
-            const stories = await storiesService.getAllStories(page, limit, filters);
+            const sort = {
+                sortBy: req.query.sortBy as 'titleEn' | 'createdAt' | 'century' | undefined,
+                order: req.query.order as 'asc' | 'desc' | undefined,
+                };
+            const stories = await storiesService.getAllStories(page, limit, filters, sort);
             res.status(200).json(stories);
         }
         catch (error) {
