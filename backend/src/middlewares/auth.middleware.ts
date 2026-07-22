@@ -19,7 +19,7 @@ function getSigningKey(header: jwt.JwtHeader, callback: (err: Error | null, key?
   });
 }
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest<P = {}> extends Request<P> {
   user?: jwt.JwtPayload;
 }
 

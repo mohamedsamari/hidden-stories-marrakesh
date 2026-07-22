@@ -6,6 +6,8 @@ import categoriesRoutes from './routes/categories.routes';
 import historicalPeriodsRoutes from './routes/historical-periods.routes';
 import dynastiesRoutes from './routes/dynasties.routes';
 import locationsRoutes from './routes/locations.routes';
+import adminStoriesRoutes from './routes/admin-stories.routes';
+import adminRoutes from './routes/admin.routes';
 
 
 
@@ -21,6 +23,8 @@ app.use('/categories', categoriesRoutes);
 app.use('/historical-periods', historicalPeriodsRoutes);
 app.use('/dynasties', dynastiesRoutes);
 app.use('/locations', locationsRoutes);
+app.use('/admin/stories', adminStoriesRoutes);
+app.use('/admin', adminRoutes);
 
 
 app.get("/health",(req, res)=>{
