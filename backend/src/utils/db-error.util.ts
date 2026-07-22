@@ -9,7 +9,7 @@ interface PostgresError {
  * Maps common PostgreSQL constraint violation codes to appropriate HTTP
  * responses, falling back to a generic 500 for anything unexpected.
  */
-export function handleWriteError(error: unknown, res: Response, action: string) {
+export function handleWriteError(error: unknown, res: Response, action: string, resourceLabel = 'la ressource') {
   const pgError = error as PostgresError;
 
   if (pgError?.code === '23503') {
@@ -30,8 +30,8 @@ export function handleWriteError(error: unknown, res: Response, action: string) 
     });
   }
 
-  console.error(`Erreur lors de la ${action} de l'histoire:`, error);
+  console.error(`Erreur lors de la ${action} de ${resourceLabel}:`, error);
   return res.status(500).json({
-    message: `Une erreur est survenue lors de la ${action} de l'histoire.`,
+    message: `Une erreur est survenue lors de la ${action} de ${resourceLabel}.`,
   });
 }

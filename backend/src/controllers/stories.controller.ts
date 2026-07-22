@@ -81,7 +81,7 @@ export const storiesController = {
             const newStory = await storiesService.createStory(req.body);
             res.status(201).json(newStory);
         } catch (error) {
-            handleWriteError(error, res, 'création');
+            handleWriteError(error, res, 'création', "l'histoire");
         }
     },
 
@@ -93,7 +93,7 @@ export const storiesController = {
             }
             res.status(200).json(updated);
         } catch (error) {
-            handleWriteError(error, res, 'mise à jour');
+            handleWriteError(error, res, 'mise à jour', "l'histoire");
         }
     },
 
