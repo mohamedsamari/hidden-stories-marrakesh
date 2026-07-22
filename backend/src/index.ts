@@ -7,6 +7,10 @@ import historicalPeriodsRoutes from './routes/historical-periods.routes';
 import dynastiesRoutes from './routes/dynasties.routes';
 import locationsRoutes from './routes/locations.routes';
 import adminStoriesRoutes from './routes/admin-stories.routes';
+import adminCategoriesRoutes from './routes/admin-categories.routes';
+import adminHistoricalPeriodsRoutes from './routes/admin-historical-periods.routes';
+import adminDynastiesRoutes from './routes/admin-dynasties.routes';
+import adminLocationsRoutes from './routes/admin-locations.routes';
 import adminRoutes from './routes/admin.routes';
 
 
@@ -24,6 +28,10 @@ app.use('/historical-periods', historicalPeriodsRoutes);
 app.use('/dynasties', dynastiesRoutes);
 app.use('/locations', locationsRoutes);
 app.use('/admin/stories', adminStoriesRoutes);
+app.use('/admin/categories', adminCategoriesRoutes);
+app.use('/admin/historical-periods', adminHistoricalPeriodsRoutes);
+app.use('/admin/dynasties', adminDynastiesRoutes);
+app.use('/admin/locations', adminLocationsRoutes);
 app.use('/admin', adminRoutes);
 
 
