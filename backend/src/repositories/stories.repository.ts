@@ -22,6 +22,8 @@ const sortableColumns = {
   century: stories.century,
 };
 
+type Story = typeof stories.$inferSelect;
+
 function buildFilterConditions(filters: StoryFilters): SQL[] {
   const conditions: SQL[] = [];
 
@@ -85,7 +87,7 @@ export const storiesRepository = {
     return filteredQuery.orderBy(orderFn(column)).limit(limit).offset(offset);
   },
 
-  async findById(id: string) {
+  async findById(id: string): Promise<Story | null> {
     const result = await db.select().from(stories).where(eq(stories.id, id));
     return result[0] ?? null;
   },
@@ -95,7 +97,7 @@ export const storiesRepository = {
     return result[0];
   },
 
-  async update(id: string, data: Partial<typeof stories.$inferInsert>) {
+  async update(id: string, data: Partial<typeof stories.$inferInsert>): Promise<Story | null> {
     const result = await db
       .update(stories)
       .set({ ...data, updatedAt: new Date() })
@@ -104,12 +106,12 @@ export const storiesRepository = {
     return result[0] ?? null;
   },
 
-  async remove(id: string) {
+  async remove(id: string): Promise<Story | null> {
     const result = await db.delete(stories).where(eq(stories.id, id)).returning();
     return result[0] ?? null;
   },
 
-  async setPublished(id: string, isPublished: boolean) {
+  async setPublished(id: string, isPublished: boolean): Promise<Story | null> {
     const result = await db
       .update(stories)
       .set({ isPublished, updatedAt: new Date() })
