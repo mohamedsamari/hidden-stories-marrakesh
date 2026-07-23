@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 import storiesRoutes from './routes/stories.routes';
 import categoriesRoutes from './routes/categories.routes';
 import historicalPeriodsRoutes from './routes/historical-periods.routes';
@@ -11,6 +12,9 @@ import adminCategoriesRoutes from './routes/admin-categories.routes';
 import adminHistoricalPeriodsRoutes from './routes/admin-historical-periods.routes';
 import adminDynastiesRoutes from './routes/admin-dynasties.routes';
 import adminLocationsRoutes from './routes/admin-locations.routes';
+import adminUploadsRoutes from './routes/admin-uploads.routes';
+import adminStoryImagesRoutes from './routes/admin-story-images.routes';
+import adminLocationImagesRoutes from './routes/admin-location-images.routes';
 import adminRoutes from './routes/admin.routes';
 
 
@@ -21,6 +25,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/stories', storiesRoutes);
 app.use('/categories', categoriesRoutes);
@@ -32,6 +37,9 @@ app.use('/admin/categories', adminCategoriesRoutes);
 app.use('/admin/historical-periods', adminHistoricalPeriodsRoutes);
 app.use('/admin/dynasties', adminDynastiesRoutes);
 app.use('/admin/locations', adminLocationsRoutes);
+app.use('/admin/uploads', adminUploadsRoutes);
+app.use('/admin/story-images', adminStoryImagesRoutes);
+app.use('/admin/location-images', adminLocationImagesRoutes);
 app.use('/admin', adminRoutes);
 
 
