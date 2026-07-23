@@ -5,10 +5,7 @@ interface PostgresError {
   detail?: string;
 }
 
-/**
- * Maps common PostgreSQL constraint violation codes to appropriate HTTP
- * responses, falling back to a generic 500 for anything unexpected.
- */
+
 export function handleWriteError(error: unknown, res: Response, action: string, resourceLabel = 'la ressource') {
   const pgError = error as PostgresError;
 

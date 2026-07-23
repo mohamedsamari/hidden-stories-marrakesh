@@ -6,7 +6,7 @@ import { Request, Response, NextFunction } from 'express';
 const UPLOAD_DIR = path.join(__dirname, '../../uploads');
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; 
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -29,8 +29,7 @@ const upload = multer({
   },
 });
 
-// Wraps multer's single-file upload so a rejected file (bad type, too large)
-// comes back as a clean JSON 400 instead of Express's default error page.
+
 export function uploadSingleImage(req: Request, res: Response, next: NextFunction) {
   upload.single('image')(req, res, (err: unknown) => {
     if (err instanceof Error) {
