@@ -41,14 +41,25 @@ function buildFilterConditions(filters: StoryFilters): SQL[] {
   }
 
   if (filters.search) {
-    const searchPattern = `%${filters.search}%`;
-    const searchCondition = or(
-      ilike(stories.titleEn, searchPattern),
-      ilike(stories.titleFr, searchPattern),
-      ilike(stories.shortDescriptionEn, searchPattern),
-      ilike(stories.shortDescriptionFr, searchPattern),
-    );
-    if (searchCondition) conditions.push(searchCondition);
+    // Each word must appear somewhere (any field, any order) rather than requiring
+    // the whole phrase as one substring — "palais Bahia" should still find "Bahia Palace".
+    const words = filters.search.trim().split(/\s+/).filter(Boolean);
+    const wordConditions = words
+      .map((word) => {
+        const pattern = `%${word}%`;
+        return or(
+          ilike(stories.titleEn, pattern),
+          ilike(stories.titleFr, pattern),
+          ilike(stories.shortDescriptionEn, pattern),
+          ilike(stories.shortDescriptionFr, pattern),
+        );
+      })
+      .filter((condition): condition is SQL => condition !== undefined);
+
+    if (wordConditions.length > 0) {
+      const searchCondition = and(...wordConditions);
+      if (searchCondition) conditions.push(searchCondition);
+    }
   }
 
   return conditions;
