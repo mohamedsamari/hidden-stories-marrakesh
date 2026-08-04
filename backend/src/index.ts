@@ -18,6 +18,7 @@ import adminUploadsRoutes from './routes/admin-uploads.routes';
 import adminStoryImagesRoutes from './routes/admin-story-images.routes';
 import adminLocationImagesRoutes from './routes/admin-location-images.routes';
 import adminRoutes from './routes/admin.routes';
+import assistantRoutes from './routes/assistant.routes';
 
 
 
@@ -47,6 +48,7 @@ app.use('/admin/uploads', adminUploadsRoutes);
 app.use('/admin/story-images', adminStoryImagesRoutes);
 app.use('/admin/location-images', adminLocationImagesRoutes);
 app.use('/admin', adminRoutes);
+app.use('/assistant', assistantRoutes);
 
 
 app.get("/health",(req, res)=>{

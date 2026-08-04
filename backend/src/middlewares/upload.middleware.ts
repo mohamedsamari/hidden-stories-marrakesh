@@ -38,3 +38,33 @@ export function uploadSingleImage(req: Request, res: Response, next: NextFunctio
     next();
   });
 }
+
+const ALLOWED_AUDIO_MIME_TYPES = [
+  'audio/x-m4a',
+  'audio/mp4',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/webm',
+  'audio/ogg',
+];
+const MAX_AUDIO_SIZE_BYTES = 15 * 1024 * 1024;
+
+const audioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_AUDIO_SIZE_BYTES },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_AUDIO_MIME_TYPES.includes(file.mimetype)) {
+      return cb(new Error('Format audio non supporté.'));
+    }
+    cb(null, true);
+  },
+});
+
+export function uploadSingleAudio(req: Request, res: Response, next: NextFunction) {
+  audioUpload.single('audio')(req, res, (err: unknown) => {
+    if (err instanceof Error) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+}
