@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { storiesController } from '../controllers/stories.controller';
 import { storyImagesController } from '../controllers/story-images.controller';
+import { storyReferencesController } from '../controllers/story-references.controller';
 
 const router = Router();
 
@@ -98,5 +99,27 @@ router.get('/:id', storiesController.getById);
  *         description: Histoire introuvable ou non publiée
  */
 router.get('/:id/images', storyImagesController.getAllForStory);
+
+/**
+ * @openapi
+ * /stories/{id}/references:
+ *   get:
+ *     summary: Liste les références/sources associées à une histoire publiée
+ *     tags: [Stories]
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         description: Liste des références de l'histoire
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/StoryReference'
+ *       404:
+ *         description: Histoire introuvable ou non publiée
+ */
+router.get('/:id/references', storyReferencesController.getAllForStory);
 
 export default router;

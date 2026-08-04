@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { storiesController } from '../controllers/stories.controller';
+import { storyImagesController } from '../controllers/story-images.controller';
 import { requireAuth } from '../middlewares/auth.middleware';
 import { validateBody } from '../middlewares/validate.middleware';
 import { createStorySchema, updateStorySchema } from '../validators/story.validator';
@@ -150,6 +151,32 @@ router.get('/:id', storiesController.getByIdAdmin);
 router.post('/', validateBody(createStorySchema), storiesController.create);
 router.patch('/:id', validateBody(updateStorySchema), storiesController.update);
 router.delete('/:id', storiesController.remove);
+
+/**
+ * @openapi
+ * /admin/stories/{id}/images:
+ *   get:
+ *     summary: Liste les images d'une histoire, publiée ou non
+ *     tags: [Stories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         description: Liste des images de l'histoire
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/StoryImage'
+ *       401:
+ *         description: Authentification requise
+ *       404:
+ *         description: Histoire introuvable
+ */
+router.get('/:id/images', storyImagesController.getAllForStoryAdmin);
 
 /**
  * @openapi

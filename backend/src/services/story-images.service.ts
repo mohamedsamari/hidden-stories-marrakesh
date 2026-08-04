@@ -13,6 +13,15 @@ export const storyImagesService = {
     return storyImagesRepository.findAllByStoryId(storyId);
   },
 
+  // Admin variant: no published check, so drafts can have their gallery managed too.
+  async getImagesForStoryAdmin(storyId: string) {
+    const story = await storiesService.getStoryByIdAdmin(storyId);
+    if (!story) {
+      return null;
+    }
+    return storyImagesRepository.findAllByStoryId(storyId);
+  },
+
   async createStoryImage(data: CreateStoryImageInput) {
     return storyImagesRepository.create(data);
   },

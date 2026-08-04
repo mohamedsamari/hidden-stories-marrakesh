@@ -225,6 +225,17 @@ const options: swaggerJsdoc.Options = {
           },
         },
 
+        StoryReference: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            storyId: { type: 'string', format: 'uuid' },
+            label: { type: 'string' },
+            url: { type: 'string', nullable: true },
+            createdAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
         LocationImage: {
           type: 'object',
           properties: {

@@ -17,6 +17,19 @@ export const storyImagesController = {
     }
   },
 
+  async getAllForStoryAdmin(req: AuthenticatedRequest<{ id: string }>, res: Response) {
+    try {
+      const images = await storyImagesService.getImagesForStoryAdmin(req.params.id);
+      if (images === null) {
+        return res.status(404).json({ message: 'Histoire introuvable.' });
+      }
+      res.status(200).json(images);
+    } catch (error) {
+      console.error('Erreur dans getAllForStoryAdmin story images:', error);
+      res.status(500).json({ message: 'Une erreur est survenue lors de la récupération des images.' });
+    }
+  },
+
   async create(req: AuthenticatedRequest, res: Response) {
     try {
       const image = await storyImagesService.createStoryImage(req.body);
