@@ -1,0 +1,348 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------- Encodage et langue ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ---------- Mise en page ----------
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+% ---------- Tableaux ----------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+
+% ---------- Code ----------
+\usepackage{listings}
+\usepackage{xcolor}
+
+% ---------- Liens ----------
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    urlcolor=blue!60!black,
+    citecolor=blue!60!black,
+    pdftitle={Hidden Stories of Marrakesh -- Rapport d'avancement},
+    pdfauthor={}
+}
+
+% ---------- Style des titres ----------
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+% ---------- En-tête / pied de page ----------
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Hidden Stories of Marrakesh}
+\lhead{Rapport d'avancement}
+\cfoot{\thepage}
+
+% ---------- Style du code ----------
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codegray}{RGB}{110,110,110}
+\definecolor{codeblue}{RGB}{30,90,180}
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    commentstyle=\color{codegray},
+    keywordstyle=\color{codeblue}\bfseries,
+    breaklines=true,
+    frame=single,
+    framerule=0.3pt,
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    xleftmargin=1.5em,
+}
+
+\title{\textbf{Hidden Stories of Marrakesh}\\[0.3em]\large Rapport d'avancement technique}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Ce document présente l'état d'avancement du projet \emph{Hidden Stories of Marrakesh}, une application destinée à faire découvrir aux visiteurs les monuments historiques de Marrakech à travers des fiches bilingues (français/anglais) enrichies de photographies, de récits, de localisations géographiques et de sources documentaires. Le projet se compose d'une API backend (Express/TypeScript/PostgreSQL) et d'une application mobile (Expo/React Native), toutes deux détaillées dans ce rapport.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ======================================================================
+\section{Contexte et objectifs}
+% ======================================================================
+
+Le projet \emph{Hidden Stories of Marrakesh} vise à construire une application mobile permettant à des visiteurs de découvrir les monuments historiques de la médina de Marrakech : mosquées, palais, jardins, remparts, musées et nécropoles. Chaque monument est présenté sous forme d'une fiche riche comprenant :
+
+\begin{itemize}[nosep]
+    \item un titre et un résumé bilingues (français/anglais),
+    \item un récit historique complet, illustré d'images intégrées,
+    \item une galerie de photographies supplémentaires,
+    \item des métadonnées historiques (siècle, dynastie, période historique),
+    \item une localisation géographique consultable sur une carte,
+    \item une liste de références et sources documentaires.
+\end{itemize}
+
+Le développement suit une feuille de route en douze étapes, allant de l'initialisation du backend jusqu'à la documentation finale et la démonstration, en passant par la construction de l'API, de l'application mobile, du backoffice d'administration et d'un futur assistant conversationnel basé sur l'intelligence artificielle.
+
+% ======================================================================
+\section{Architecture générale}
+% ======================================================================
+
+Le projet est structuré en plusieurs modules indépendants au sein d'un même dépôt :
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Module} & \textbf{État} \\
+\midrule
+\texttt{backend/} & API REST -- terminé pour le périmètre actuel \\
+\texttt{mobile/} & Application Expo/React Native -- fonctionnelle \\
+\texttt{backoffice/} & Interface d'administration web -- non commencé \\
+\texttt{mcp-server/} & Serveur pour l'agent IA (MCP) -- non commencé \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Le backend expose une API REST consommée à la fois par l'application mobile (routes publiques) et, à terme, par le backoffice (routes d'administration protégées).
+
+% ======================================================================
+\section{Backend}
+% ======================================================================
+
+\subsection{Choix technique : Express plutôt que NestJS}
+
+Le cahier des charges du projet impose explicitement l'usage du framework NestJS. Le backend a cependant été développé avec \textbf{Express} et TypeScript dès le premier commit. Cet écart est assumé : l'architecture Express a été conservée par souci de continuité, dix-sept commits ayant déjà été construits dessus au moment où l'écart a été identifié. Cette décision technique devra être documentée et justifiée dans la documentation finale du projet, conformément à l'exigence du cahier des charges selon laquelle les décisions architecturales doivent être motivées.
+
+\subsection{Pile technique}
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Composant} & \textbf{Technologie} \\
+\midrule
+Serveur HTTP & Express 5 \\
+Langage & TypeScript \\
+Base de données & PostgreSQL \\
+ORM & Drizzle ORM \\
+Authentification & Kinde (jetons JWT vérifiés via JWKS) \\
+Téléversement de fichiers & Multer (stockage disque local) \\
+Documentation API & swagger-jsdoc + swagger-ui-express \\
+Tests & Jest + ts-jest \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Modélisation des données}
+
+Le schéma de base de données comprend huit tables, gérées via des migrations Drizzle Kit :
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Table} & \textbf{Rôle} \\
+\midrule
+\texttt{categories} & Catégories de monuments (monument religieux, palais, jardin...) \\
+\texttt{historical\_periods} & Périodes historiques (almoravide, almohade, saadienne...) \\
+\texttt{dynasties} & Dynasties ayant régné sur Marrakech \\
+\texttt{locations} & Localisations géographiques (latitude/longitude, adresse) \\
+\texttt{location\_images} & Images associées à une localisation \\
+\texttt{stories} & Histoires bilingues associées à un monument \\
+\texttt{story\_images} & Galerie d'images associée à une histoire \\
+\texttt{story\_references} & Sources et références documentaires d'une histoire \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Chaque histoire (\texttt{stories}) référence une catégorie, une localisation et, optionnellement, une période historique et une dynastie. Les champs de contenu (titre, description courte, récit complet) sont dupliqués en anglais et en français plutôt que gérés via une table de traduction séparée.
+
+\subsection{API publique}
+
+L'API publique, consommée par l'application mobile, expose notamment :
+
+\begin{itemize}[nosep]
+    \item \texttt{GET /stories} -- liste paginée des histoires publiées, avec filtres (catégorie, période historique, dynastie, siècle), recherche textuelle et tri ;
+    \item \texttt{GET /stories/:id} -- détail d'une histoire ;
+    \item \texttt{GET /stories/:id/images} -- galerie d'images d'une histoire ;
+    \item \texttt{GET /stories/:id/references} -- sources et références d'une histoire ;
+    \item \texttt{GET /categories}, \texttt{GET /dynasties}, \texttt{GET /historical-periods}, \texttt{GET /locations} -- listes de référence.
+\end{itemize}
+
+Toutes ces routes sont publiques (aucune authentification requise) et ne renvoient que du contenu publié.
+
+\subsection{Administration et authentification}
+
+Un ensemble parallèle de routes, préfixées par \texttt{/admin}, permet la création, la modification et la suppression de chaque ressource (histoires, catégories, localisations, dynasties, périodes historiques, images, références). Ces routes sont protégées par un middleware d'authentification vérifiant les jetons JWT émis par Kinde contre son point de terminaison JWKS. Le mécanisme a été validé de bout en bout avec un jeton réel.
+
+\subsection{Gestion des images}
+
+Les fichiers image sont téléversés via Multer et stockés sur le disque local du serveur (\texttt{backend/uploads/}), servis statiquement via Express. Ce choix de stockage local a été retenu pour éviter la dépendance à un compte de stockage cloud (Cloudinary, S3) pendant la phase de développement ; il devra être reconsidéré avant un déploiement en production, la plupart des hébergeurs disposant d'un système de fichiers éphémère.
+
+\subsection{Documentation}
+
+L'ensemble des routes est documenté via des annotations \texttt{@openapi} au format Swagger/OpenAPI, générées avec \texttt{swagger-jsdoc} et exposées via \texttt{swagger-ui-express} sur \texttt{/api-docs} (interface interactive) et \texttt{/api-docs.json} (spécification brute).
+
+\subsection{Tests}
+
+Une suite de sept fichiers de tests unitaires (Jest) couvre les validateurs, les services métier (histoires, catégories, périodes historiques), le middleware d'authentification et le middleware de validation des requêtes. Les dépôts de données (repositories) et les dépendances externes sont simulés (mocks), permettant l'exécution des tests sans base de données réelle.
+
+% ======================================================================
+\section{Application mobile}
+% ======================================================================
+
+\subsection{Choix technique}
+
+L'application mobile est développée avec \textbf{Expo} (SDK 54) et \textbf{Expo Router} pour la navigation par fichiers, en \textbf{TypeScript}. Le développement et les tests sont réalisés via l'application Expo Go sur un appareil Android physique, connecté au serveur backend sur le réseau local.
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Composant} & \textbf{Technologie} \\
+\midrule
+Framework & Expo SDK 54 / React Native 0.81 \\
+Navigation & Expo Router (routes par fichiers) \\
+Cartographie & react-native-maps \\
+Persistance locale & @react-native-async-storage/async-storage \\
+Icônes & @expo/vector-icons (Ionicons) \\
+Gestion d'état partagé & React Context API \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Structure de navigation}
+
+L'application repose sur une pile de navigation (\emph{stack}) racine contenant :
+
+\begin{itemize}[nosep]
+    \item un groupe d'onglets \texttt{(tabs)}, comprenant quatre écrans accessibles en permanence :
+    \begin{itemize}[nosep]
+        \item \textbf{Accueil} -- liste des histoires, recherche, filtres par catégorie ;
+        \item \textbf{Favoris} -- histoires enregistrées par l'utilisateur ;
+        \item \textbf{Carte} -- localisation de tous les monuments sur une carte interactive ;
+        \item \textbf{Réglages} -- préférences de thème et de langue ;
+    \end{itemize}
+    \item un écran de détail (\texttt{story/[id]}), ouvert par-dessus les onglets lors de la sélection d'une histoire.
+\end{itemize}
+
+\subsection{Écran d'accueil}
+
+L'écran d'accueil affiche la liste des histoires sous forme de cartes (image, titre, résumé, siècle, catégorie), avec :
+
+\begin{itemize}[nosep]
+    \item une barre de recherche textuelle, avec temporisation (\emph{debounce} de 400\,ms) avant l'appel réseau afin d'éviter une requête à chaque frappe ;
+    \item des filtres par catégorie sous forme de puces horizontales, alimentés dynamiquement par l'API ;
+    \item un indicateur de chargement et une gestion des erreurs réseau.
+\end{itemize}
+
+\subsection{Écran de détail}
+
+L'écran de détail présente l'histoire complète : image d'en-tête, titre, métadonnées (catégorie, siècle, dynastie, période historique), texte intégral avec image incorporée, galerie de photographies supplémentaires, bouton d'ouverture de la localisation dans l'application de cartographie du téléphone, et liste des références/sources consultables.
+
+Le texte des histoires contient une syntaxe Markdown minimale (titre et image intégrée). Plutôt que d'intégrer une bibliothèque Markdown complète, un analyseur syntaxique minimal a été écrit spécifiquement pour ces deux constructions.
+
+\subsection{Favoris}
+
+Les favoris sont gérés via un \emph{contexte} React partagé (\texttt{FavoritesProvider}), persistant la liste des identifiants favoris dans le stockage local du téléphone (\texttt{AsyncStorage}). Aucun compte utilisateur n'est requis : les favoris restent propres à l'appareil. Un écran dédié affiche la liste complète des histoires favorites.
+
+\subsection{Carte}
+
+L'écran Carte affiche l'ensemble des localisations sous forme de marqueurs sur une carte centrée sur Marrakech. La sélection d'un marqueur ouvre une bulle d'information menant, le cas échéant, à l'histoire associée.
+
+\subsection{Thème et langue}
+
+Deux préférences utilisateur, indépendantes du système d'exploitation, sont proposées dans l'écran Réglages et persistées localement :
+
+\begin{itemize}[nosep]
+    \item \textbf{Thème} : système, clair ou sombre ;
+    \item \textbf{Langue} : français ou anglais, appliquée à l'ensemble du contenu bilingue de l'application (titres, descriptions, récits, catégories, dynasties, périodes historiques, localisations).
+\end{itemize}
+
+\subsection{Identité visuelle}
+
+Une palette de couleurs et une typographie dédiées ont été définies pour l'application (bleu Majorelle en couleur principale, safran en couleur d'accent, fond crème, typographie serif pour les titres), remplaçant le thème générique du gabarit Expo par défaut.
+
+% ======================================================================
+\section{Contenu}
+% ======================================================================
+
+La base de données de démonstration contient dix monuments emblématiques de Marrakech, chacun associé à une histoire complète bilingue :
+
+\begin{center}
+\begin{longtable}{@{}p{5.5cm}p{3.5cm}p{2cm}@{}}
+\toprule
+\textbf{Monument} & \textbf{Catégorie} & \textbf{Siècle} \\
+\midrule
+Mosquée Koutoubia & Monument religieux & XII\textsuperscript{e} \\
+Place Jemaa el-Fna & Place publique & XI\textsuperscript{e} \\
+Jardin Majorelle & Jardin & XX\textsuperscript{e} \\
+Jardin de la Ménara & Jardin & XII\textsuperscript{e} \\
+Palais de la Bahia & Palais & XIX\textsuperscript{e} \\
+Palais El Badi & Palais & XVI\textsuperscript{e} \\
+Tombeaux Saadiens & Nécropole royale & XVI\textsuperscript{e} \\
+Medersa Ben Youssef & Monument éducatif & XIV\textsuperscript{e} \\
+Remparts de Marrakech & Architecture défensive & XII\textsuperscript{e} \\
+Musée de Marrakech & Musée & XIX\textsuperscript{e} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+Ce contenu se répartit ainsi :
+
+\begin{itemize}[nosep]
+    \item \textbf{10} histoires bilingues, avec récit complet et image de couverture ;
+    \item \textbf{40} photographies au total (une couverture et deux à trois images de galerie par monument), sourcées sur Wikimedia Commons et hébergées localement par le serveur backend ;
+    \item \textbf{14} références et sources documentaires (Wikipédia, UNESCO, sites officiels) ;
+    \item \textbf{8} catégories, \textbf{6} périodes historiques, \textbf{5} dynasties, \textbf{10} localisations géolocalisées.
+\end{itemize}
+
+% ======================================================================
+\section{État d'avancement}
+% ======================================================================
+
+Le projet suit une feuille de route en douze étapes :
+
+\begin{center}
+\begin{longtable}{@{}cp{9cm}c@{}}
+\toprule
+\textbf{Étape} & \textbf{Description} & \textbf{État} \\
+\midrule
+\endhead
+0 & Initialisation du backend Express/TypeScript & Terminé \\
+1 & Mise en place de PostgreSQL et Drizzle ORM & Terminé \\
+2 & Modélisation de la base de données (8 tables) & Terminé \\
+3 & Script de peuplement avec de vrais monuments & Terminé \\
+4 & Routes API publiques (filtres, tri, pagination, recherche) & Terminé \\
+5 & Authentification Kinde et routes d'administration protégées & Terminé \\
+6 & Téléversement et gestion des images & Terminé \\
+7 & Documentation Swagger/OpenAPI & Terminé \\
+8 & Tests unitaires backend (Jest) & Terminé \\
+9 & Application mobile (Expo) & Terminé pour le périmètre actuel \\
+10 & Backoffice (tableau de bord d'administration) & Non commencé \\
+11 & Agent IA, serveur MCP, synthèse et reconnaissance vocale & Non commencé \\
+12 & ERD final, documentation complète et démonstration & En cours \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% ======================================================================
+\section{Perspectives}
+% ======================================================================
+
+Les prochaines étapes du projet consistent à :
+
+\begin{itemize}[nosep]
+    \item développer le \textbf{backoffice}, une interface web d'administration permettant de gérer le contenu (histoires, images, localisations) sans passer directement par l'API ;
+    \item construire l'\textbf{agent conversationnel} et son serveur MCP, incluant la synthèse vocale (TTS) pour la narration audio des histoires -- fonctionnalité prévue dans la maquette de l'application mais volontairement différée jusqu'à la mise en place de cette infrastructure ;
+    \item finaliser la \textbf{documentation} du projet, incluant le schéma entité-association définitif et la justification écrite de l'écart architectural (Express au lieu de NestJS).
+\end{itemize}
+
+\end{document}
