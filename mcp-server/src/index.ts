@@ -28,6 +28,13 @@ const app = createMcpExpressApp({
   ],
 });
 
+// Plain health-check endpoint — hosting platforms commonly ping "/" right
+// after startup to decide whether a deploy is healthy, and MCP itself only
+// exposes POST/GET on /mcp (GET there deliberately returns 405).
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.post('/mcp', async (req, res) => {
   try {
     const server = createServer();
