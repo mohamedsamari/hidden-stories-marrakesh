@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -22,12 +23,16 @@ import { useLanguage } from '@/contexts/language-context';
 import { useCategories } from '@/hooks/use-categories';
 import { useStoryDetail } from '@/hooks/use-story-detail';
 import { useTheme } from '@/hooks/use-theme';
+import { LocationPlanPoint } from '@/types/location-plan-point';
+import { formatWeekSchedule, isOpenNow } from '@/utils/opening-hours';
 import { toRoman } from '@/utils/roman-numeral';
 import { pickTranslation } from '@/utils/translate';
 
 type ContentBlock =
   | { type: 'paragraph'; text: string }
   | { type: 'image'; url: string; caption: string };
+
+type TabKey = 'affiche' | 'visiter' | 'plan';
 
 // The seed content only ever uses a leading "# Title" (redundant with the
 // screen's own title, so it's dropped) and inline "![caption](url)" images.
@@ -60,9 +65,19 @@ function MetaChip({ label }: { label: string }) {
   );
 }
 
+function StatusPill({ dotColor, label }: { dotColor: string; label: string }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.statusPill, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+      <View style={[styles.statusDot, { backgroundColor: dotColor }]} />
+      <ThemedText type="small">{label}</ThemedText>
+    </View>
+  );
+}
+
 export default function StoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { story, images, references, dynasty, historicalPeriod, location, loading, error } =
+  const { story, images, references, dynasty, historicalPeriod, location, planPoints, loading, error } =
     useStoryDetail(id);
   const { categories } = useCategories();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -70,6 +85,8 @@ export default function StoryDetailScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [speaking, setSpeaking] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>('affiche');
+  const [selectedPoint, setSelectedPoint] = useState<LocationPlanPoint | null>(null);
 
   useEffect(() => {
     return () => {
@@ -133,11 +150,27 @@ export default function StoryDetailScreen() {
     Linking.openURL(url);
   };
 
+  const openNow = location ? isOpenNow(location.openingHours) : null;
+  const priceLabel = location?.isFreeEntry
+    ? pickTranslation('Free entry', 'Entrée gratuite', language)
+    : (location?.entryPriceLabel ?? pickTranslation('Paid entry', 'Entrée payante', language));
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'affiche', label: pickTranslation('On display', 'À l\'affiche', language) },
+    { key: 'visiter', label: pickTranslation('Visit', 'Visiter', language) },
+    { key: 'plan', label: pickTranslation('Floor plan', 'Plan', language) },
+  ];
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView>
         <View style={styles.hero}>
           <Image source={{ uri: story.coverImageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <LinearGradient
+            colors={['transparent', 'rgba(26, 14, 7, 0.65)']}
+            style={styles.heroScrim}
+            pointerEvents="none"
+          />
           <View style={[styles.heroTop, { paddingTop: insets.top + Spacing.two }]}>
             <Pressable onPress={() => router.back()} style={styles.heroButton} hitSlop={8}>
               <Ionicons name="arrow-back" color="#ffffff" size={18} />
@@ -159,6 +192,22 @@ export default function StoryDetailScreen() {
           <ThemedText type="title" style={styles.title}>
             {pickTranslation(story.titleEn, story.titleFr, language)}
           </ThemedText>
+
+          {location && (
+            <View style={styles.statusRow}>
+              {openNow !== null && (
+                <StatusPill
+                  dotColor={openNow ? '#2E8B57' : '#DC3545'}
+                  label={
+                    openNow
+                      ? pickTranslation('Open now', 'Ouvert', language)
+                      : pickTranslation('Closed now', 'Fermé', language)
+                  }
+                />
+              )}
+              <StatusPill dotColor={location.isFreeEntry ? '#2E8B57' : theme.accent} label={priceLabel} />
+            </View>
+          )}
 
           <View style={styles.metaRow}>
             {categoryName && <MetaChip label={categoryName} />}
@@ -187,86 +236,212 @@ export default function StoryDetailScreen() {
 
           <Pressable
             onPress={() => handleToggleListen(narrationText)}
-            style={[styles.mapButton, { borderColor: theme.tint }]}>
+            style={[styles.listenButton, { backgroundColor: theme.tint }]}>
             <Ionicons
               name={speaking ? 'stop-circle-outline' : 'volume-high-outline'}
-              color={theme.tint}
-              size={16}
+              color="#ffffff"
+              size={18}
             />
-            <ThemedText type="smallBold" style={{ color: theme.tint }}>
+            <ThemedText type="smallBold" style={{ color: '#ffffff' }}>
               {speaking
                 ? pickTranslation('Stop listening', 'Arrêter la lecture', language)
-                : pickTranslation('Listen to the story', "Écouter l'histoire", language)}
+                : pickTranslation('Listen to the story', "Écouter l'audio", language)}
             </ThemedText>
           </Pressable>
 
-          <View style={styles.prose}>
-            {contentBlocks.map((block, index) =>
-              block.type === 'image' ? (
-                <View key={index} style={[styles.inlineFigure, { borderColor: theme.border }]}>
-                  <Image source={{ uri: block.url }} style={styles.inlineImage} contentFit="cover" />
-                  {block.caption && (
-                    <ThemedText
-                      type="small"
-                      themeColor="textSecondary"
-                      style={[styles.inlineCaption, { backgroundColor: theme.backgroundElement }]}>
-                      {block.caption}
-                    </ThemedText>
-                  )}
-                </View>
-              ) : (
-                <ThemedText key={index} style={styles.paragraph}>
-                  {block.text}
+          <View style={[styles.tabBar, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+            {tabs.map((tab) => (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
+                style={[
+                  styles.tabButton,
+                  activeTab === tab.key && { backgroundColor: theme.tint },
+                ]}>
+                <ThemedText
+                  type="smallBold"
+                  style={activeTab === tab.key ? { color: '#ffffff' } : undefined}
+                  themeColor={activeTab === tab.key ? undefined : 'textSecondary'}>
+                  {tab.label}
                 </ThemedText>
-              )
-            )}
+              </Pressable>
+            ))}
           </View>
 
-          {images.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.gallery}>
-              {images.map((image) => (
-                <Image
-                  key={image.id}
-                  source={{ uri: image.imageUrl }}
-                  style={styles.galleryImage}
-                  contentFit="cover"
-                />
-              ))}
-            </ScrollView>
-          )}
+          {activeTab === 'affiche' && (
+            <View style={styles.tabContent}>
+              <View style={styles.prose}>
+                {contentBlocks.map((block, index) =>
+                  block.type === 'image' ? (
+                    <View key={index} style={[styles.inlineFigure, { borderColor: theme.border }]}>
+                      <Image source={{ uri: block.url }} style={styles.inlineImage} contentFit="cover" />
+                      {block.caption && (
+                        <ThemedText
+                          type="small"
+                          themeColor="textSecondary"
+                          style={[styles.inlineCaption, { backgroundColor: theme.backgroundElement }]}>
+                          {block.caption}
+                        </ThemedText>
+                      )}
+                    </View>
+                  ) : (
+                    <ThemedText key={index} style={styles.paragraph}>
+                      {block.text}
+                    </ThemedText>
+                  )
+                )}
+              </View>
 
-          {location && (
-            <Pressable
-              onPress={openInMaps}
-              style={[styles.mapButton, { borderColor: theme.tint }]}>
-              <Ionicons name="location-outline" color={theme.tint} size={16} />
-              <ThemedText type="smallBold" style={{ color: theme.tint }}>
-                {pickTranslation('Open in Maps', 'Ouvrir dans Plans', language)}
-              </ThemedText>
-            </Pressable>
-          )}
+              {images.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.gallery}>
+                  {images.map((image) => (
+                    <Image
+                      key={image.id}
+                      source={{ uri: image.imageUrl }}
+                      style={styles.galleryImage}
+                      contentFit="cover"
+                    />
+                  ))}
+                </ScrollView>
+              )}
 
-          {references.length > 0 && (
-            <View style={styles.references}>
-              <ThemedText type="smallBold" style={[styles.referencesTitle, { color: theme.accent }]}>
-                {pickTranslation('REFERENCES & SOURCES', 'RÉFÉRENCES & SOURCES', language)}
-              </ThemedText>
-              {references.map((reference) => (
-                <Pressable
-                  key={reference.id}
-                  onPress={() => reference.url && Linking.openURL(reference.url)}
-                  style={[styles.referenceRow, { borderColor: theme.border }]}>
-                  <ThemedText type="small" style={styles.referenceLabel}>
-                    {reference.label}
+              {references.length > 0 && (
+                <View style={styles.references}>
+                  <ThemedText type="smallBold" style={[styles.referencesTitle, { color: theme.accent }]}>
+                    {pickTranslation('REFERENCES & SOURCES', 'RÉFÉRENCES & SOURCES', language)}
                   </ThemedText>
-                  {reference.url && (
-                    <Ionicons name="open-outline" color={theme.textSecondary} size={14} />
-                  )}
+                  {references.map((reference) => (
+                    <Pressable
+                      key={reference.id}
+                      onPress={() => reference.url && Linking.openURL(reference.url)}
+                      style={[styles.referenceRow, { borderColor: theme.border }]}>
+                      <ThemedText type="small" style={styles.referenceLabel}>
+                        {reference.label}
+                      </ThemedText>
+                      {reference.url && (
+                        <Ionicons name="open-outline" color={theme.textSecondary} size={14} />
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {activeTab === 'visiter' && (
+            <View style={styles.tabContent}>
+              {location?.openingHours ? (
+                <View style={[styles.hoursCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+                  {formatWeekSchedule(location.openingHours, language).map((row) => (
+                    <View key={row.dayLabel} style={styles.hoursRow}>
+                      <ThemedText type={row.isToday ? 'smallBold' : 'small'}>{row.dayLabel}</ThemedText>
+                      <ThemedText type={row.isToday ? 'smallBold' : 'small'} themeColor={row.isToday ? undefined : 'textSecondary'}>
+                        {row.hoursLabel}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {pickTranslation('Opening hours to be confirmed.', 'Horaires à confirmer.', language)}
+                </ThemedText>
+              )}
+
+              {location && (
+                <Pressable onPress={openInMaps} style={[styles.mapButton, { borderColor: theme.tint }]}>
+                  <Ionicons name="location-outline" color={theme.tint} size={16} />
+                  <ThemedText type="smallBold" style={{ color: theme.tint }}>
+                    {pickTranslation('Open in Maps', 'Ouvrir dans Plans', language)}
+                  </ThemedText>
                 </Pressable>
-              ))}
+              )}
+
+              {location?.addressEn && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {pickTranslation(location.addressEn, location.addressFr ?? location.addressEn, language)}
+                </ThemedText>
+              )}
+            </View>
+          )}
+
+          {activeTab === 'plan' && (
+            <View style={styles.tabContent}>
+              {location?.planImageUrl ? (
+                <>
+                  <View style={[styles.planFigure, { borderColor: theme.border }]}>
+                    <Image source={{ uri: location.planImageUrl }} style={styles.planImage} contentFit="contain" />
+                    {planPoints.map((point) => (
+                      <Pressable
+                        key={point.id}
+                        onPress={() => setSelectedPoint(point)}
+                        style={[
+                          styles.planMarker,
+                          {
+                            left: `${point.xPercent}%`,
+                            top: `${point.yPercent}%`,
+                            backgroundColor: selectedPoint?.id === point.id ? theme.accent : theme.tint,
+                          },
+                        ]}>
+                        <ThemedText type="small" style={styles.planMarkerText}>
+                          {point.position}
+                        </ThemedText>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  {selectedPoint && (
+                    <View style={[styles.selectedPointCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+                      <ThemedText type="smallBold">
+                        {pickTranslation(selectedPoint.labelEn, selectedPoint.labelFr, language)}
+                      </ThemedText>
+                      {(selectedPoint.descriptionEn || selectedPoint.descriptionFr) && (
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {pickTranslation(
+                            selectedPoint.descriptionEn ?? '',
+                            selectedPoint.descriptionFr ?? '',
+                            language
+                          )}
+                        </ThemedText>
+                      )}
+                    </View>
+                  )}
+
+                  {planPoints.length > 0 && (
+                    <View style={styles.planLegend}>
+                      {planPoints.map((point) => (
+                        <Pressable
+                          key={point.id}
+                          onPress={() => setSelectedPoint(point)}
+                          style={[
+                            styles.planLegendRow,
+                            { borderColor: theme.border },
+                            selectedPoint?.id === point.id && { backgroundColor: theme.backgroundSelected },
+                          ]}>
+                          <View style={[styles.planLegendBadge, { backgroundColor: theme.tint }]}>
+                            <ThemedText type="small" style={styles.planMarkerText}>
+                              {point.position}
+                            </ThemedText>
+                          </View>
+                          <ThemedText type="small">
+                            {pickTranslation(point.labelEn, point.labelFr, language)}
+                          </ThemedText>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </>
+              ) : (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {pickTranslation(
+                    'Floor plan coming soon for this monument.',
+                    'Plan bientôt disponible pour ce monument.',
+                    language
+                  )}
+                </ThemedText>
+              )}
             </View>
           )}
         </View>
@@ -286,6 +461,13 @@ const styles = StyleSheet.create({
   },
   hero: {
     height: 260,
+  },
+  heroScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '60%',
   },
   heroTop: {
     flexDirection: 'row',
@@ -308,6 +490,25 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
   },
+  statusRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: Spacing.five,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -318,6 +519,30 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     borderRadius: Spacing.five,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  listenButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.half,
+    gap: Spacing.half,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.two,
+  },
+  tabContent: {
+    gap: Spacing.three,
   },
   prose: {
     gap: Spacing.three,
@@ -354,6 +579,66 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     borderRadius: Spacing.three,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  hoursCard: {
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  hoursRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  planFigure: {
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  planImage: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+  },
+  planMarker: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginLeft: -12,
+    marginTop: -12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  planMarkerText: {
+    color: '#ffffff',
+    fontSize: 12,
+    lineHeight: 14,
+  },
+  selectedPointCard: {
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
+  planLegend: {
+    gap: Spacing.one,
+  },
+  planLegendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  planLegendBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   references: {
     gap: Spacing.one,

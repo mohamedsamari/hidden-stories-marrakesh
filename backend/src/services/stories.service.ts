@@ -1,5 +1,6 @@
 import { storiesRepository, StoryFilters, SortOptions } from '../repositories/stories.repository';
 import { CreateStoryInput, UpdateStoryInput } from '../validators/story.validator';
+import { fuzzyMatchesQuery } from '../utils/fuzzy-search.util';
 
 export const storiesService = {
   async getAllStories(
@@ -12,7 +13,29 @@ export const storiesService = {
     const safePage = page > 0 ? page : 1;
     const offset = (safePage - 1) * safeLimit;
 
-    return storiesRepository.findAll(safeLimit, offset, filters, sort);
+    const results = await storiesRepository.findAll(safeLimit, offset, filters, sort);
+
+    // Exact search (word-by-word substring match) found nothing — fall back to a
+    // typo-tolerant pass, since transliterated names have several accepted
+    // spellings ("Jamaa el fena" vs "Jemaa el-Fna").
+    if (results.length === 0 && filters.search) {
+      const allCandidates = await storiesRepository.findAll(
+        1000,
+        0,
+        { ...filters, search: undefined },
+        sort,
+      );
+      return allCandidates
+        .filter((story) =>
+          fuzzyMatchesQuery(
+            `${story.titleEn} ${story.titleFr} ${story.shortDescriptionEn} ${story.shortDescriptionFr}`,
+            filters.search!,
+          ),
+        )
+        .slice(0, safeLimit);
+    }
+
+    return results;
   },
 
   async getAllStoriesAdmin(

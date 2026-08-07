@@ -9,8 +9,8 @@ export const assistantController = {
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ message: 'Le champ "message" est requis.' });
       }
-      const answer = await askAssistant(message);
-      res.status(200).json({ answer });
+      const { answer, relatedStories } = await askAssistant(message);
+      res.status(200).json({ answer, relatedStories });
     } catch (error) {
       console.error('Erreur assistant:', error);
       res

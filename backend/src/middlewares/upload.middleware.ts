@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
   fileFilter: (req, file, cb) => {
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
@@ -28,7 +28,6 @@ const upload = multer({
     cb(null, true);
   },
 });
-
 
 export function uploadSingleImage(req: Request, res: Response, next: NextFunction) {
   upload.single('image')(req, res, (err: unknown) => {

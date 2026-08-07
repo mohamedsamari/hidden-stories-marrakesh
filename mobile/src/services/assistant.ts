@@ -1,6 +1,12 @@
 import { API_BASE_URL } from '@/constants/api';
+import { RelatedStory } from '@/types/related-story';
 
-export async function askAssistant(message: string): Promise<string> {
+export interface AssistantAnswer {
+  answer: string;
+  relatedStories: RelatedStory[];
+}
+
+export async function askAssistant(message: string): Promise<AssistantAnswer> {
   const response = await fetch(`${API_BASE_URL}/assistant/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -11,8 +17,7 @@ export async function askAssistant(message: string): Promise<string> {
     throw new Error(`Failed to get assistant response: ${response.status}`);
   }
 
-  const data: { answer: string } = await response.json();
-  return data.answer;
+  return response.json();
 }
 
 export async function transcribeAudio(uri: string): Promise<string> {

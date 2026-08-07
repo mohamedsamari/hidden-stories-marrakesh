@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -19,7 +20,9 @@ export function StoryCard({ story, categoryName }: { story: Story; categoryName?
   const { language } = useLanguage();
 
   return (
-    <Pressable onPress={() => router.push({ pathname: '/story/[id]', params: { id: story.id } })}>
+    <Pressable
+      onPress={() => router.push({ pathname: '/story/[id]', params: { id: story.id } })}
+      style={styles.shadowWrapper}>
       <ThemedView type="backgroundElement" style={[styles.container, { borderColor: theme.border }]}>
         <View style={styles.coverContainer}>
           <Image
@@ -27,6 +30,12 @@ export function StoryCard({ story, categoryName }: { story: Story; categoryName?
             style={styles.image}
             contentFit="cover"
             transition={200}
+          />
+
+          <LinearGradient
+            colors={['transparent', 'rgba(30, 16, 8, 0.55)']}
+            style={styles.scrim}
+            pointerEvents="none"
           />
 
           <Pressable
@@ -70,6 +79,18 @@ export function StoryCard({ story, categoryName }: { story: Story; categoryName?
 }
 
 const styles = StyleSheet.create({
+  shadowWrapper: Platform.select({
+    ios: {
+      shadowColor: '#3A2717',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+    },
+    android: {
+      elevation: 4,
+    },
+    default: {},
+  }),
   container: {
     borderRadius: Spacing.four,
     borderWidth: StyleSheet.hairlineWidth,
@@ -81,6 +102,13 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  scrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '55%',
   },
   favoriteButton: {
     position: 'absolute',

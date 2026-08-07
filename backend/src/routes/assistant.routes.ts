@@ -30,6 +30,18 @@ const router = Router();
  *               properties:
  *                 answer:
  *                   type: string
+ *                 relatedStories:
+ *                   type: array
+ *                   description: Histoires que l'assistant a consultées pour répondre (pour afficher une carte cliquable dans le chat)
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string, format: uuid }
+ *                       titleEn: { type: string }
+ *                       titleFr: { type: string }
+ *                       shortDescriptionEn: { type: string }
+ *                       shortDescriptionFr: { type: string }
+ *                       coverImageUrl: { type: string }
  *       400:
  *         description: Message manquant
  */

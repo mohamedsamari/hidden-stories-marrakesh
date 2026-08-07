@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'expo-image'
+import { router } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -23,17 +25,22 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme'
+import { useLanguage } from '@/contexts/language-context'
 import { useTheme } from '@/hooks/use-theme'
 import { askAssistant, transcribeAudio } from '@/services/assistant'
+import { RelatedStory } from '@/types/related-story'
+import { pickTranslation } from '@/utils/translate'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   text: string
+  relatedStories?: RelatedStory[]
 }
 
 export default function AssistantScreen() {
   const theme = useTheme()
+  const { language } = useLanguage()
   const insets = useSafeAreaInsets()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -128,8 +135,13 @@ export default function AssistantScreen() {
     setLoading(true)
 
     try {
-      const answer = await askAssistant(trimmed)
-      const assistantMessage: Message = { id: `${Date.now()}-a`, role: 'assistant', text: answer }
+      const { answer, relatedStories } = await askAssistant(trimmed)
+      const assistantMessage: Message = {
+        id: `${Date.now()}-a`,
+        role: 'assistant',
+        text: answer,
+        relatedStories,
+      }
       setMessages((current) => [...current, assistantMessage])
       speakMessage(assistantMessage)
     } catch {
@@ -178,34 +190,57 @@ export default function AssistantScreen() {
           style={styles.list}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           renderItem={({ item }) => (
-            <View
-              style={[
-                styles.bubble,
-                item.role === 'user'
-                  ? [styles.bubbleUser, { backgroundColor: theme.tint }]
-                  : [
-                      styles.bubbleAssistant,
-                      { backgroundColor: theme.backgroundElement, borderColor: theme.border },
-                    ],
-              ]}>
-              <ThemedText type="small" style={item.role === 'user' ? styles.bubbleUserText : undefined}>
-                {item.text}
-              </ThemedText>
-              {item.role === 'assistant' && (
+            <View style={item.role === 'user' ? styles.messageGroupUser : styles.messageGroupAssistant}>
+              <View
+                style={[
+                  styles.bubble,
+                  item.role === 'user'
+                    ? [styles.bubbleUser, { backgroundColor: theme.tint }]
+                    : [
+                        styles.bubbleAssistant,
+                        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                      ],
+                ]}>
+                <ThemedText type="small" style={item.role === 'user' ? styles.bubbleUserText : undefined}>
+                  {item.text}
+                </ThemedText>
+                {item.role === 'assistant' && (
+                  <Pressable
+                    onPress={() => handleToggleSpeak(item)}
+                    hitSlop={8}
+                    style={styles.speakButton}>
+                    <Ionicons
+                      name={speakingId === item.id ? 'volume-mute-outline' : 'volume-high-outline'}
+                      size={15}
+                      color={theme.textSecondary}
+                    />
+                    <ThemedText type="small" themeColor="textSecondary" style={styles.speakLabel}>
+                      {speakingId === item.id ? 'Arrêter' : 'Écouter'}
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
+
+              {item.relatedStories?.map((story) => (
                 <Pressable
-                  onPress={() => handleToggleSpeak(item)}
-                  hitSlop={8}
-                  style={styles.speakButton}>
-                  <Ionicons
-                    name={speakingId === item.id ? 'volume-mute-outline' : 'volume-high-outline'}
-                    size={15}
-                    color={theme.textSecondary}
-                  />
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.speakLabel}>
-                    {speakingId === item.id ? 'Arrêter' : 'Écouter'}
-                  </ThemedText>
+                  key={story.id}
+                  onPress={() => router.push({ pathname: '/story/[id]', params: { id: story.id } })}
+                  style={[
+                    styles.storyCard,
+                    { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                  ]}>
+                  <Image source={{ uri: story.coverImageUrl }} style={styles.storyCardImage} contentFit="cover" />
+                  <View style={styles.storyCardText}>
+                    <ThemedText type="smallBold" numberOfLines={1}>
+                      {pickTranslation(story.titleEn, story.titleFr, language)}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+                      {pickTranslation(story.shortDescriptionEn, story.shortDescriptionFr, language)}
+                    </ThemedText>
+                  </View>
+                  <Ionicons name="chevron-forward" color={theme.textSecondary} size={16} />
                 </Pressable>
-              )}
+              ))}
             </View>
           )}
           ListEmptyComponent={
@@ -302,11 +337,37 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     flexGrow: 1,
   },
+  messageGroupUser: {
+    alignItems: 'flex-end',
+    gap: Spacing.two,
+  },
+  messageGroupAssistant: {
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+  },
   bubble: {
     maxWidth: '80%',
     borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
+  },
+  storyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    maxWidth: '85%',
+    padding: Spacing.two,
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  storyCardImage: {
+    width: 48,
+    height: 48,
+    borderRadius: Spacing.two,
+  },
+  storyCardText: {
+    flex: 1,
+    gap: 2,
   },
   bubbleUser: {
     alignSelf: 'flex-end',
