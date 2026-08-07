@@ -16,7 +16,17 @@ function createServer() {
   return server;
 }
 
-const app = createMcpExpressApp();
+// Allow both local dev hosts and the deployed public domain — createMcpExpressApp's
+// default DNS-rebinding protection only trusts 127.0.0.1, which rejects every
+// request once the server is reachable under a real public hostname.
+const app = createMcpExpressApp({
+  host: '0.0.0.0',
+  allowedHosts: [
+    'localhost',
+    '127.0.0.1',
+    'hidden-stories-mcp-server-c8a96.containers.snapdeploy.app',
+  ],
+});
 
 app.post('/mcp', async (req, res) => {
   try {
