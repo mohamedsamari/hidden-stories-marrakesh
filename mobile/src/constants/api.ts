@@ -1,1 +1,1 @@
-export const API_BASE_URL = 'https://voting-wit-wheat-fig.trycloudflare.com';
+export const API_BASE_URL = 'http://192.168.100.157:3000';
