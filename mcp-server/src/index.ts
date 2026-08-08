@@ -16,17 +16,13 @@ function createServer() {
   return server;
 }
 
-// Allow both local dev hosts and the deployed public domain — createMcpExpressApp's
-// default DNS-rebinding protection only trusts 127.0.0.1, which rejects every
-// request once the server is reachable under a real public hostname.
-const app = createMcpExpressApp({
-  host: '0.0.0.0',
-  allowedHosts: [
-    'localhost',
-    '127.0.0.1',
-    'hidden-stories-mcp-server-c8a96.containers.snapdeploy.app',
-  ],
-});
+// DNS-rebinding protection exists to stop a malicious webpage from tricking a
+// browser into calling a server on someone's localhost. This server is only
+// ever called by our own backend (never a browser), and it's reached through
+// a Cloudflare Tunnel whose hostname changes on every restart — so an
+// allowlist can't be kept in sync. Disabling the check is the right trade-off
+// here, not a workaround.
+const app = createMcpExpressApp({ host: '0.0.0.0' });
 
 // Plain health-check endpoint — hosting platforms commonly ping "/" right
 // after startup to decide whether a deploy is healthy, and MCP itself only
