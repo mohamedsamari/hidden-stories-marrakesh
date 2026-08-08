@@ -36,12 +36,6 @@ module.exports = {
         },
       ],
       'expo-audio',
-      [
-        '@rnmapbox/maps',
-        {
-          RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
-        },
-      ],
     ],
     experiments: {
       typedRoutes: true,
