@@ -24,7 +24,7 @@
     "express": "^5.2.1",
     "groq-sdk": "^1.4.0",
     "jsonwebtoken": "^9.0.3",
-    "jwks-rsa": "^4.1.0",
+    "jwks-rsa": "^3.2.2",
     "multer": "^2.2.0",
     "pg": "^8.22.0",
     "swagger-jsdoc": "^6.3.0",
