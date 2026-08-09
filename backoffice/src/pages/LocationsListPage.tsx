@@ -19,8 +19,27 @@ export function LocationsListPage() {
   async function handleDelete(location: Location) {
     if (!window.confirm(`Supprimer « ${location.nameFr} » ?`)) return
     const token = await getToken()
-    if (!token) return
-    await deleteLocation(token, location.id)
+
+if (!token) {
+  console.log('NO TOKEN')
+  return
+}
+
+try {
+  const payload = JSON.parse(atob(token.split('.')[1]))
+  console.log('TOKEN PAYLOAD:', {
+    aud: payload.aud,
+    iss: payload.iss,
+    exp: payload.exp,
+    azp: payload.azp,
+    scope: payload.scp,
+    permissions: payload.permissions,
+  })
+} catch (error) {
+  console.error('Impossible de décoder le token', error)
+}
+
+await deleteLocation(token, location.id)
     setLocations((current) => current.filter((l) => l.id !== location.id))
   }
 
