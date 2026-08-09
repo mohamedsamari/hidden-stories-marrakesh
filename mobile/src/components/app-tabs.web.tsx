@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   Tabs,
   TabList,
@@ -23,19 +24,19 @@ export default function AppTabs() {
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="home" href="/(tabs)" asChild>
-            <TabButton>Home</TabButton>
+            <TabButton icon="compass-outline" iconFocused="compass">Accueil</TabButton>
           </TabTrigger>
           <TabTrigger name="favorites" href="/(tabs)/favorites" asChild>
-            <TabButton>Favoris</TabButton>
+            <TabButton icon="heart-outline" iconFocused="heart">Favoris</TabButton>
           </TabTrigger>
           <TabTrigger name="map" href="/(tabs)/map" asChild>
-            <TabButton>Carte</TabButton>
+            <TabButton icon="map-outline" iconFocused="map">Carte</TabButton>
           </TabTrigger>
           <TabTrigger name="assistant" href="/(tabs)/assistant" asChild>
-            <TabButton>Assistant</TabButton>
+            <TabButton icon="sparkles-outline" iconFocused="sparkles">Assistant</TabButton>
           </TabTrigger>
           <TabTrigger name="settings" href="/(tabs)/settings" asChild>
-            <TabButton>Réglages</TabButton>
+            <TabButton icon="settings-outline" iconFocused="settings">Réglages</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -43,12 +44,28 @@ export default function AppTabs() {
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+interface ExtendedTabButtonProps extends TabTriggerSlotProps {
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconFocused?: keyof typeof Ionicons.glyphMap;
+}
+
+export function TabButton({ children, isFocused, icon, iconFocused, ...props }: ExtendedTabButtonProps) {
+  const { resolvedScheme } = useThemePreference();
+  const colors = Colors[resolvedScheme];
+  const iconName = isFocused ? (iconFocused || icon) : icon;
+
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={styles.tabButtonView}>
+        {iconName && (
+          <Ionicons
+            name={iconName}
+            size={16}
+            color={isFocused ? colors.tint : colors.textSecondary}
+          />
+        )}
         <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
           {children}
         </ThemedText>
@@ -65,7 +82,7 @@ export function CustomTabList(props: TabListProps) {
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
         <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
+          Hidden Stories Marrakesh
         </ThemedText>
 
         {props.children}
@@ -107,6 +124,9 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   tabButtonView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,

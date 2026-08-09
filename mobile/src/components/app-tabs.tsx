@@ -1,4 +1,5 @@
-import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '@/constants/theme';
 import { useThemePreference } from '@/contexts/theme-preference-context';
@@ -8,35 +9,61 @@ export default function AppTabs() {
   const colors = Colors[resolvedScheme];
 
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      iconColor={{ default: colors.textSecondary, selected: colors.tint }}
-      labelStyle={{ default: { color: colors.textSecondary }, selected: { color: colors.tint } }}>
-      <NativeTabs.Trigger name="index">
-        <Label>Home</Label>
-        <Icon src={require('@/assets/images/tabIcons/home.png')} />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="favorites">
-        <Label>Favoris</Label>
-        <Icon src={require('@/assets/images/tabIcons/favorites.png')} />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="map">
-        <Label>Carte</Label>
-        <Icon src={require('@/assets/images/tabIcons/map.png')} />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="assistant">
-        <Label>Assistant</Label>
-        <Icon src={require('@/assets/images/tabIcons/assistant.png')} />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="settings">
-        <Label>Réglages</Label>
-        <Icon src={require('@/assets/images/tabIcons/settings.png')} />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+        },
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Accueil',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'compass' : 'compass-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Favoris',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Carte',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'map' : 'map-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="assistant"
+        options={{
+          title: 'Assistant',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'sparkles' : 'sparkles-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Réglages',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
