@@ -54,7 +54,10 @@ app.get("/health",(req, res)=>{
     res.json({status: "ok", message: "Server is running!"});
 })
 
-app.listen(PORT, ()=>{
+export default app;
+
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+  });
 }
-)
