@@ -61,6 +61,10 @@ app.get('/mcp', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Serveur MCP démarré sur http://localhost:${PORT}/mcp`);
-});
+export default app;
+
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Serveur MCP démarré sur http://localhost:${PORT}/mcp`);
+  });
+}
